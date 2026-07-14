@@ -153,7 +153,7 @@ class QuoteRuntime:
         quotes = load_quotes(self.workbook_id)
         return self._response(quotes)
 
-    def create_quote(self, request: QuoteCreateRequest) -> GeneratedAppResponse:
+    def create_quote(self, request: QuoteCreateRequest, *, persist: bool = True) -> GeneratedAppResponse:
         client = self._context.clients.get(request.client_id)
         if client is None:
             raise RuntimeValidationError(f"Unknown client: {request.client_id}.")
@@ -196,7 +196,8 @@ class QuoteRuntime:
             created_at=datetime.now(timezone.utc).isoformat(),
         )
         quotes = [*load_quotes(self.workbook_id), quote]
-        save_quotes(self.workbook_id, quotes)
+        if persist:
+            save_quotes(self.workbook_id, quotes)
         return self._response(quotes)
 
     def transition_quote(self, quote_id: str, request: QuoteTransitionRequest) -> GeneratedAppResponse:

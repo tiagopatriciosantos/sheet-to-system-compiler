@@ -4,6 +4,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y libreoffice-calc \
+    && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 COPY app ./app

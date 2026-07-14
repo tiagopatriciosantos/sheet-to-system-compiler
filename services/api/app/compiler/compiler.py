@@ -143,6 +143,20 @@ def _workflow(rules: list[BusinessRule]) -> list[WorkflowSpec]:
 
 def _decision_kind(option: str) -> str:
     lowered = option.lower()
+    inclusive_approval = any(
+        marker in lowered
+        for marker in (
+            "ou mais",
+            "ou superior",
+            "at or above",
+            "or higher",
+            "igual ou superior",
+        )
+    )
+    if inclusive_approval and any(
+        term in lowered for term in ("auto_approved", "auto approved", "automaticamente", "auto-aprov")
+    ):
+        return "approve"
     if any(term in lowered for term in ("review", "revis", "needs_approval", "needs approval", "requer aprovação")):
         return "review"
     if any(term in lowered for term in ("auto_approved", "auto approved", "automaticamente", "auto-aprov")):

@@ -590,6 +590,117 @@ button:disabled {
   padding: 0.7rem;
 }
 
+.runtime-actions {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+}
+
+.runtime-actions span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.parity-panel {
+  background: rgba(23, 32, 45, 0.8);
+  border: 1px solid rgba(130, 240, 195, 0.34);
+  border-radius: 0.9rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.ai-badge.blocked,
+.parity-status.blocked {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fde68a;
+}
+
+.parity-summary {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.parity-summary span {
+  background: rgba(10, 13, 18, 0.45);
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0.65rem;
+}
+
+.parity-summary strong {
+  color: var(--text);
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.parity-table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.parity-table {
+  border-collapse: collapse;
+  font-size: 0.74rem;
+  min-width: 700px;
+  width: 100%;
+}
+
+.parity-table th {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.55rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.parity-table td {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  max-width: 20rem;
+  padding: 0.65rem 0.55rem;
+  vertical-align: top;
+}
+
+.parity-table td strong,
+.parity-table td small {
+  display: block;
+}
+
+.parity-table td strong {
+  color: var(--text);
+}
+
+.parity-table td small {
+  line-height: 1.35;
+  margin-top: 0.25rem;
+}
+
+.parity-status {
+  background: rgba(130, 240, 195, 0.12);
+  border-radius: 999px;
+  color: var(--accent);
+  display: inline-block;
+  font-size: 0.66rem;
+  padding: 0.25rem 0.45rem;
+  text-transform: uppercase;
+}
+
+.parity-status.fail {
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
 .runtime-stats {
   display: grid;
   gap: 0.5rem;
@@ -844,6 +955,15 @@ button:disabled {
   .runtime-stats,
   .quote-form,
   .quote-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .runtime-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .parity-summary {
     grid-template-columns: 1fr 1fr;
   }
 

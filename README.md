@@ -4,7 +4,7 @@ O Sheet-to-System Compiler transforma folhas de cálculo críticas em sistemas v
 
 ## Estado atual
 
-Fase 4 — aplicação gerada verificável. Nesta fase existem:
+Fase 5 — paridade verificável. Nesta fase existem:
 
 - API FastAPI com `/health` e `POST /api/workbooks/analyze`;
 - validação, hash e storage local seguro para uploads `.xlsx`;
@@ -19,12 +19,15 @@ Fase 4 — aplicação gerada verificável. Nesta fase existem:
 - runtime schema-driven de propostas, sem código executável gerado pelo modelo;
 - cálculo de preço, desconto, receita, custo e margem a partir do workbook e do blueprint;
 - workflow de aprovação com estados `AUTO_APPROVED`, `NEEDS_APPROVAL`, `APPROVED` e `REJECTED`;
-- lista, criação, detalhe e transição de propostas na interface.
+- lista, criação, detalhe e transição de propostas na interface;
+- Parity Lab com 12 cenários, resultados normalizados, tolerâncias e diffs por cenário;
+- runner isolado com LibreOffice headless, sem fallback silencioso quando o recalculador não está disponível;
+- correção demonstrável de uma falha de fronteira: 11/12 → regra corrigida → 12/12.
 - workbook de demonstração industrial com cinco sheets, uma sheet escondida, regras de margem e uma funcionalidade não suportada declarada;
 - testes unitários, snapshot e integração HTTP;
 - configuração local para `OPENAI_API_KEY` sem incluir a chave no Git.
 
-A paridade pertence à fase seguinte. A aplicação nunca envia o workbook integral para a OpenAI: envia apenas um payload `WorkbookIR` minimizado e redigido.
+O Parity Lab recalcula cópias temporárias do workbook e compara-as com a runtime compilada. A aplicação nunca envia o workbook integral para a OpenAI: envia apenas um payload `WorkbookIR` minimizado e redigido.
 
 ## Pré-requisitos
 
@@ -69,4 +72,4 @@ O backend é o único componente autorizado a usar a chave. O frontend não rece
 
 ## Plano
 
-Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de avançar para a Fase 5.
+Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de avançar para a Fase 6.

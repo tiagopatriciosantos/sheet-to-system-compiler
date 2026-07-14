@@ -34,4 +34,11 @@
 
 - A runtime é uma interpretação determinística do `SystemBlueprint`, não código gerado pela OpenAI. No MVP suporta o fluxo industrial de propostas: lookup de clientes/produtos, desconto máximo, receita, custo, margem, fronteira `<`/`<=` e transições de aprovação.
 - Os dados tabulares de `Clients`, `Products` e `Config` são lidos como inputs constantes; as fórmulas do workbook nunca são executadas pelo runtime. O operador de comparação é lido da regra confirmada no blueprint.
-- As propostas são persistidas em `data/artifacts/<workbook_id>/runtime/quotes.json` com escrita atómica. SQLite e multiutilizador continuam fora desta fase; a paridade real pertence à Fase 5.
+- As propostas são persistidas em `data/artifacts/<workbook_id>/runtime/quotes.json` com escrita atómica. SQLite e multiutilizador continuam fora desta fase; os relatórios de paridade são artefactos separados.
+
+## 2026-07-14 — Fase 5
+
+- O Parity Lab usa cópias temporárias do workbook e escreve apenas `Client ID`, `Product ID`, `Quantity` e `Discount` nas células de entrada permitidas. Macros, VBA, ligações externas e o workbook original nunca são executados ou alterados.
+- O recalculo de referência é feito por LibreOffice Calc headless, instalado na imagem da API. Cada cenário tem timeout, perfil isolado e leitura `data_only`; a ausência ou falha do recalculador produz `blocked`, nunca `pass`.
+- A runtime é executada com `persist=False` durante a paridade para que uma prova não crie propostas comerciais persistentes. Os relatórios de execução são artefactos JSON atómicos por workbook e run.
+- A confirmação humana que contém simultaneamente estados de revisão e aprovação é resolvida pela frase explícita de fronteira (“15% ou mais AUTO_APPROVED”), evitando que palavras descritivas anteriores dominem a decisão.

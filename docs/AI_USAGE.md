@@ -23,3 +23,7 @@ Esta fase não faz uma nova chamada à OpenAI. O utilizador escolhe entre opçõ
 ## Fase 4 — runtime gerada
 
 Esta fase também não faz chamadas à OpenAI. A runtime usa apenas o `SystemBlueprint` validado e dados tabulares do workbook. Não avalia fórmulas Excel, não executa código do modelo e não inventa campos; qualquer capacidade fora do subconjunto de propostas é tratada como limitação explícita até à paridade.
+
+## Fase 5 — paridade
+
+Esta fase não faz chamadas à OpenAI. Os 12 cenários são definidos deterministicamente e executados contra uma cópia recalculada pelo LibreOffice e contra a runtime compilada. A correção da fronteira de 15% foi feita no compilador determinístico a partir da resposta humana já persistida; não houve geração de código nem alteração autónoma de regras pelo modelo.

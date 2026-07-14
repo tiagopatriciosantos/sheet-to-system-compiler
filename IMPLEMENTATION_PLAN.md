@@ -1,6 +1,6 @@
 # Sheet-to-System Compiler — plano de implementação
 
-Estado: Fase 4 concluída; Fase 5 por iniciar
+Estado: Fase 5 concluída; Fase 6 por iniciar
 Data de referência: 14 de julho de 2026
 Track: Work & Productivity
 Prazo do hackathon: 21 de julho de 2026, 17:00 PDT
@@ -434,17 +434,17 @@ Gate: **concluído**. A UI permite responder perguntas e gerar o blueprint; a AP
 - [x] workflow simples de aprovação;
 - [x] acabamento dos estados de loading/error/empty.
 
-Gate: **concluído**. A runtime lê as entidades e regras do `SystemBlueprint`, usa os dados tabulares do workbook para clientes/produtos/configuração e calcula receita, custo, margem, desconto e estado de aprovação sem executar fórmulas Excel. O teste real criou uma proposta de margem 10% como `NEEDS_APPROVAL`, transitou-a para `APPROVED`, criou uma proposta auto-aprovada através do proxy Next.js e confirmou os endpoints em Docker. A Fase 5 permanece por iniciar.
+Gate: **concluído**. A runtime lê as entidades e regras do `SystemBlueprint`, usa os dados tabulares do workbook para clientes/produtos/configuração e calcula receita, custo, margem, desconto e estado de aprovação sem executar fórmulas Excel. O teste real criou uma proposta de margem 10% como `NEEDS_APPROVAL`, transitou-a para `APPROVED`, criou uma proposta auto-aprovada através do proxy Next.js e confirmou os endpoints em Docker.
 
 ### 19 julho — Fase 5: paridade
 
-- [ ] criar runner LibreOffice isolado;
-- [ ] executar os 12 cenários no workbook e runtime;
-- [ ] normalizar resultados e produzir diffs;
-- [ ] construir Parity Lab;
-- [ ] validar a sequência 11/12 → correção → 12/12.
+- [x] criar runner LibreOffice isolado;
+- [x] executar os 12 cenários no workbook e runtime;
+- [x] normalizar resultados e produzir diffs;
+- [x] construir Parity Lab;
+- [x] validar a sequência 11/12 → correção → 12/12.
 
-Gate: a falha é real, explicável e desaparece apenas após corrigir a regra.
+Gate: **concluído**. O runner copia o workbook para diretórios temporários, escreve apenas os quatro inputs permitidos, recalcula com LibreOffice 25.2.3.2 em modo headless e compara as cinco saídas com tolerâncias explícitas. No workbook industrial, `parity-c4c3d3ff7a4a` produziu 11/12: a única falha foi a fronteira de 15%, com o workbook em `AUTO_APPROVED` e a runtime em `NEEDS_APPROVAL`. A interpretação da resposta humana foi corrigida para reconhecer explicitamente “15% ou mais AUTO_APPROVED”; após recompilar, `parity-974bbacec3f2` produziu 12/12, sem falhas nem bloqueios. Sem LibreOffice, os cenários ficam `blocked` e nunca `pass`.
 
 ### 20 julho — Fase 6: produto e submissão
 
@@ -522,7 +522,7 @@ Preservar Upload, X-Ray, Ambiguities, Generated App e Parity Lab. Remover dashbo
 3. **0:50–1:15 — inteligência:** regras propostas e pergunta sobre o limite de margem.
 4. **1:15–1:45 — compilação:** abrir a aplicação gerada e criar uma proposta.
 5. **1:45–2:25 — prova:** executar paridade e obter 11/12; abrir o diff na fronteira de 15%.
-6. **2:25–2:45 — correção:** confirmar `<= 15%`, recompilar e obter 12/12.
+6. **2:25–2:45 — correção:** corrigir a interpretação da resposta humana para `15% ou mais AUTO_APPROVED`, recompilar e obter 12/12.
 7. **2:45–3:00 — impacto:** migrações mais rápidas, auditáveis e com menor risco operacional.
 
 ## 17. Como o Codex deve executar este plano

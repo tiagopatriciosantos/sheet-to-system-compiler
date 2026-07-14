@@ -139,6 +139,28 @@ type GeneratedApp = {
   };
 };
 
+type ParityRun = {
+  run_id: string;
+  workbook_id: string;
+  blueprint_version: string;
+  status: "pass" | "fail" | "blocked";
+  scenarios: {
+    id: string;
+    description: string;
+    source: string;
+    inputs: Record<string, unknown>;
+    workbook_result: Record<string, unknown>;
+    runtime_result: Record<string, unknown>;
+    status: "pass" | "fail" | "blocked";
+    diffs: string[];
+  }[];
+  total: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  duration_ms: number;
+};
+
 function formatVisibility(visibility: Sheet["visibility"]) {
   if (visibility === "hidden") return "hidden";
   if (visibility === "very_hidden") return "very hidden";
@@ -152,9 +174,11 @@ export default function WorkbookAnalyzer() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [generatedApp, setGeneratedApp] = useState<GeneratedApp | null>(null);
+  const [parityRun, setParityRun] = useState<ParityRun | null>(null);
   const [appLoading, setAppLoading] = useState(false);
   const [quoteSaving, setQuoteSaving] = useState(false);
   const [quoteTransitioning, setQuoteTransitioning] = useState<string | null>(null);
+  const [parityRunning, setParityRunning] = useState(false);
   const [quoteClientId, setQuoteClientId] = useState("");
   const [quoteProductId, setQuoteProductId] = useState("");
   const [quoteQuantity, setQuoteQuantity] = useState("1");
@@ -178,6 +202,7 @@ export default function WorkbookAnalyzer() {
     setAnswers({});
     setBlueprint(null);
     setGeneratedApp(null);
+    setParityRun(null);
   }
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -207,6 +232,7 @@ export default function WorkbookAnalyzer() {
     setAnswers({});
     setBlueprint(null);
     setGeneratedApp(null);
+    setParityRun(null);
     const body = new FormData();
     body.append("file", file);
 
@@ -243,6 +269,7 @@ export default function WorkbookAnalyzer() {
       setInterpretation(interpreted);
       setBlueprint(null);
       setGeneratedApp(null);
+      setParityRun(null);
       const stateResponse = await fetch(`/api/workbooks/${interpreted.workbook_id}/ambiguities`, { cache: "no-store" });
       if (stateResponse.ok) {
         const state = (await stateResponse.json()) as AmbiguityState;
@@ -259,6 +286,7 @@ export default function WorkbookAnalyzer() {
     setAnswers((current) => ({ ...current, [questionId]: selectedOption }));
     setBlueprint(null);
     setGeneratedApp(null);
+    setParityRun(null);
   }
 
   async function loadGeneratedApp(workbookId: string) {
@@ -369,6 +397,25 @@ export default function WorkbookAnalyzer() {
       setError(requestError instanceof Error ? requestError.message : "Erro inesperado na transiÃ§Ã£o.");
     } finally {
       setQuoteTransitioning(null);
+    }
+  }
+
+  async function handleParityRun() {
+    if (!interpretation) return;
+    setParityRunning(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/workbooks/${interpretation.workbook_id}/parity-runs`, {
+        method: "POST",
+        cache: "no-store",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "NÃ£o foi possÃ­vel executar a paridade.");
+      setParityRun(payload as ParityRun);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro inesperado no Parity Lab.");
+    } finally {
+      setParityRunning(false);
     }
   }
 
@@ -614,6 +661,12 @@ export default function WorkbookAnalyzer() {
                     <span><strong>{generatedApp.dashboard.approved_quotes}</strong> aprovadas</span>
                     <span><strong>{generatedApp.dashboard.total_revenue.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</strong> receita</span>
                   </div>
+                  <div className="runtime-actions">
+                    <span>Paridade recalcula uma cópia temporária do workbook e compara os mesmos inputs com esta runtime.</span>
+                    <button type="button" onClick={handleParityRun} disabled={parityRunning || appLoading}>
+                      {parityRunning ? "A executar 12 cenários..." : "Executar Parity Lab"}
+                    </button>
+                  </div>
 
                   <form className="quote-form" onSubmit={handleCreateQuote}>
                     <div>
@@ -666,6 +719,41 @@ export default function WorkbookAnalyzer() {
                         ) : null}
                       </article>
                     ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {parityRun ? (
+                <div className="parity-panel">
+                  <div className="interpretation-heading">
+                    <div>
+                      <p className="eyebrow">PARITY LAB</p>
+                      <h3>Workbook versus runtime</h3>
+                    </div>
+                    <span className={`ai-badge ${parityRun.status === "pass" ? "success" : parityRun.status === "fail" ? "error" : "blocked"}`}>
+                      {parityRun.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="parity-summary">
+                    <span><strong>{parityRun.passed}/{parityRun.total}</strong> passaram</span>
+                    <span><strong>{parityRun.failed}</strong> falharam</span>
+                    <span><strong>{parityRun.blocked}</strong> bloqueados</span>
+                    <span><strong>{parityRun.duration_ms} ms</strong> duração</span>
+                  </div>
+                  <div className="parity-table-wrap">
+                    <table className="parity-table">
+                      <thead><tr><th>Cenário</th><th>Resultado</th><th>Estado</th><th>Diferença</th></tr></thead>
+                      <tbody>
+                        {parityRun.scenarios.map((scenario) => (
+                          <tr key={scenario.id}>
+                            <td><strong>{scenario.id}</strong><small>{scenario.description}</small></td>
+                            <td>{String(scenario.runtime_result.approval_status ?? scenario.workbook_result.approval_status ?? "—")}</td>
+                            <td><span className={`parity-status ${scenario.status}`}>{scenario.status}</span></td>
+                            <td>{scenario.diffs.length > 0 ? scenario.diffs.join(" · ") : "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               ) : null}

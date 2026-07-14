@@ -21,6 +21,7 @@ from app.domain.models import (
     AmbiguityResponse,
     AnswerRequest,
     GeneratedAppResponse,
+    ParityRun,
     QuoteCreateRequest,
     QuoteTransitionRequest,
     ResolutionSnapshot,
@@ -28,6 +29,8 @@ from app.domain.models import (
     WorkbookIR,
     WorkbookInterpretation,
 )
+from app.parity.runner import run_parity
+from app.parity.storage import load_parity_run, save_parity_run
 from app.runtime.service import QuoteRuntime, RuntimeConfigurationError, RuntimeValidationError
 from app.workbook.extractor import extract_workbook
 from app.workbook.interpreter import interpret_workbook
@@ -49,7 +52,7 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", service="api", phase="generated-app")
+    return HealthResponse(status="ok", service="api", phase="parity")
 
 
 class WorkbookAnalysisResponse(BaseModel):
@@ -227,11 +230,11 @@ def get_workbook_blueprint(workbook_id: str) -> SystemBlueprint:
     return blueprint
 
 
-def _load_quote_runtime(workbook_id: str) -> QuoteRuntime:
+def _load_compiled_workbook(workbook_id: str):
     try:
         blueprint = load_blueprint(workbook_id)
         if blueprint is None:
-            raise HTTPException(status_code=404, detail="Compile the workbook blueprint before opening the app.")
+            raise HTTPException(status_code=404, detail="Compile the workbook blueprint before continuing.")
         stored = load_stored_upload(f"{workbook_id}.xlsx")
     except HTTPException:
         raise
@@ -239,6 +242,11 @@ def _load_quote_runtime(workbook_id: str) -> QuoteRuntime:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     if stored.sha256 != blueprint.source_workbook_hash:
         raise HTTPException(status_code=409, detail="The uploaded workbook does not match the compiled blueprint.")
+    return blueprint, stored
+
+
+def _load_quote_runtime(workbook_id: str) -> QuoteRuntime:
+    blueprint, stored = _load_compiled_workbook(workbook_id)
     try:
         return QuoteRuntime(workbook_id, stored.path, blueprint)
     except RuntimeConfigurationError as exc:
@@ -282,3 +290,30 @@ def transition_generated_quote(
         return runtime.transition_quote(quote_id, request)
     except RuntimeValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post(
+    "/api/workbooks/{workbook_id}/parity-runs",
+    response_model=ParityRun,
+    tags=["parity"],
+)
+def create_parity_run(workbook_id: str) -> ParityRun:
+    blueprint, stored = _load_compiled_workbook(workbook_id)
+    try:
+        run = run_parity(workbook_id, stored.path, blueprint)
+    except RuntimeConfigurationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    save_parity_run(run)
+    return run
+
+
+@app.get(
+    "/api/workbooks/{workbook_id}/parity-runs/{run_id}",
+    response_model=ParityRun,
+    tags=["parity"],
+)
+def get_parity_run(workbook_id: str, run_id: str) -> ParityRun:
+    try:
+        return load_parity_run(workbook_id, run_id)
+    except (ArtifactNotFoundError, FileNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc

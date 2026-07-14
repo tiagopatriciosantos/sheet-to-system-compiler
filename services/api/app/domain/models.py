@@ -424,5 +424,25 @@ class ParityScenario(BaseModel):
     source: Literal["workbook_row", "generated_boundary", "human"]
     workbook_result: dict[str, Any] = Field(default_factory=dict)
     runtime_result: dict[str, Any] = Field(default_factory=dict)
-    status: ParityStatus
+    status: ParityStatus = ParityStatus.BLOCKED
     diffs: list[str] = Field(default_factory=list)
+
+
+ParityRunStatus = Literal["pass", "fail", "blocked"]
+
+
+class ParityRun(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: str
+    workbook_id: str
+    blueprint_version: str
+    status: ParityRunStatus
+    scenarios: list[ParityScenario] = Field(default_factory=list)
+    total: int = Field(ge=0)
+    passed: int = Field(ge=0)
+    failed: int = Field(ge=0)
+    blocked: int = Field(ge=0)
+    started_at: str
+    finished_at: str
+    duration_ms: int = Field(ge=0)
