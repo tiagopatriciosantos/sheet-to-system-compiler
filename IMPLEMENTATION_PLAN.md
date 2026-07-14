@@ -1,6 +1,6 @@
 # Sheet-to-System Compiler — plano de implementação
 
-Estado: Fase 3 concluída; Fase 4 por iniciar
+Estado: Fase 4 concluída; Fase 5 por iniciar
 Data de referência: 14 de julho de 2026
 Track: Work & Productivity
 Prazo do hackathon: 21 de julho de 2026, 17:00 PDT
@@ -428,13 +428,13 @@ Gate: **concluído**. A UI permite responder perguntas e gerar o blueprint; a AP
 
 ### 18 julho — Fase 4: aplicação gerada
 
-- [ ] implementar runtime schema-driven;
-- [ ] lista, criação e detalhe de propostas;
-- [ ] cálculos de margem/desconto;
-- [ ] workflow simples de aprovação;
-- [ ] acabamento dos estados de loading/error/empty.
+- [x] implementar runtime schema-driven;
+- [x] lista, criação e detalhe de propostas;
+- [x] cálculos de margem/desconto;
+- [x] workflow simples de aprovação;
+- [x] acabamento dos estados de loading/error/empty.
 
-Gate: é possível criar uma proposta e observar o comportamento de aprovação proveniente do workbook.
+Gate: **concluído**. A runtime lê as entidades e regras do `SystemBlueprint`, usa os dados tabulares do workbook para clientes/produtos/configuração e calcula receita, custo, margem, desconto e estado de aprovação sem executar fórmulas Excel. O teste real criou uma proposta de margem 10% como `NEEDS_APPROVAL`, transitou-a para `APPROVED`, criou uma proposta auto-aprovada através do proxy Next.js e confirmou os endpoints em Docker. A Fase 5 permanece por iniciar.
 
 ### 19 julho — Fase 5: paridade
 

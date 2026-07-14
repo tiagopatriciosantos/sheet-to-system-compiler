@@ -20,11 +20,15 @@ from app.domain.models import (
     AmbiguityAnswer,
     AmbiguityResponse,
     AnswerRequest,
+    GeneratedAppResponse,
+    QuoteCreateRequest,
+    QuoteTransitionRequest,
     ResolutionSnapshot,
     SystemBlueprint,
     WorkbookIR,
     WorkbookInterpretation,
 )
+from app.runtime.service import QuoteRuntime, RuntimeConfigurationError, RuntimeValidationError
 from app.workbook.extractor import extract_workbook
 from app.workbook.interpreter import interpret_workbook
 from app.workbook.storage import WorkbookUploadError, load_stored_upload, store_upload
@@ -45,7 +49,7 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", service="api", phase="blueprint")
+    return HealthResponse(status="ok", service="api", phase="generated-app")
 
 
 class WorkbookAnalysisResponse(BaseModel):
@@ -221,3 +225,60 @@ def get_workbook_blueprint(workbook_id: str) -> SystemBlueprint:
     if blueprint is None:
         raise HTTPException(status_code=404, detail="The workbook blueprint was not compiled yet.")
     return blueprint
+
+
+def _load_quote_runtime(workbook_id: str) -> QuoteRuntime:
+    try:
+        blueprint = load_blueprint(workbook_id)
+        if blueprint is None:
+            raise HTTPException(status_code=404, detail="Compile the workbook blueprint before opening the app.")
+        stored = load_stored_upload(f"{workbook_id}.xlsx")
+    except HTTPException:
+        raise
+    except (ArtifactNotFoundError, WorkbookUploadError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if stored.sha256 != blueprint.source_workbook_hash:
+        raise HTTPException(status_code=409, detail="The uploaded workbook does not match the compiled blueprint.")
+    try:
+        return QuoteRuntime(workbook_id, stored.path, blueprint)
+    except RuntimeConfigurationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.get(
+    "/api/workbooks/{workbook_id}/app",
+    response_model=GeneratedAppResponse,
+    tags=["generated-app"],
+)
+def get_generated_app(workbook_id: str) -> GeneratedAppResponse:
+    return _load_quote_runtime(workbook_id).snapshot()
+
+
+@app.post(
+    "/api/workbooks/{workbook_id}/app/quotes",
+    response_model=GeneratedAppResponse,
+    tags=["generated-app"],
+)
+def create_generated_quote(workbook_id: str, request: QuoteCreateRequest) -> GeneratedAppResponse:
+    runtime = _load_quote_runtime(workbook_id)
+    try:
+        return runtime.create_quote(request)
+    except RuntimeValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@app.post(
+    "/api/workbooks/{workbook_id}/app/quotes/{quote_id}/transitions",
+    response_model=GeneratedAppResponse,
+    tags=["generated-app"],
+)
+def transition_generated_quote(
+    workbook_id: str,
+    quote_id: str,
+    request: QuoteTransitionRequest,
+) -> GeneratedAppResponse:
+    runtime = _load_quote_runtime(workbook_id)
+    try:
+        return runtime.transition_quote(quote_id, request)
+    except RuntimeValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

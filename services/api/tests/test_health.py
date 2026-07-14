@@ -10,5 +10,5 @@ def test_health_endpoint() -> None:
     assert response.json() == {
         "status": "ok",
         "service": "api",
-        "phase": "blueprint",
+        "phase": "generated-app",
     }

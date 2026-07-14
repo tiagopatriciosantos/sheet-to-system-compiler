@@ -29,3 +29,9 @@
 - As respostas humanas são persistidas por `workbook_id` em JSON atómico dentro de `data/artifacts`; esta é uma decisão de MVP para não introduzir jobs ou migrações antes da runtime. A migração para SQLite permanece uma tarefa posterior.
 - O compiler é determinístico: `answer_fingerprint` deriva apenas do hash do workbook e das opções selecionadas, ignorando timestamps e notas para que a mesma decisão produza a mesma versão.
 - Uma decisão relacionada com uma regra acrescenta evidência `human:<question_id>`, muda o estado da regra para `confirmed` e altera apenas expressões suportadas pelo MVP. O compiler nunca produz ou executa código.
+
+## 2026-07-14 — Fase 4
+
+- A runtime é uma interpretação determinística do `SystemBlueprint`, não código gerado pela OpenAI. No MVP suporta o fluxo industrial de propostas: lookup de clientes/produtos, desconto máximo, receita, custo, margem, fronteira `<`/`<=` e transições de aprovação.
+- Os dados tabulares de `Clients`, `Products` e `Config` são lidos como inputs constantes; as fórmulas do workbook nunca são executadas pelo runtime. O operador de comparação é lido da regra confirmada no blueprint.
+- As propostas são persistidas em `data/artifacts/<workbook_id>/runtime/quotes.json` com escrita atómica. SQLite e multiutilizador continuam fora desta fase; a paridade real pertence à Fase 5.

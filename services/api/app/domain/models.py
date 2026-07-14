@@ -329,6 +329,84 @@ class SystemBlueprint(BaseModel):
         return self
 
 
+QuoteApprovalStatus = Literal["AUTO_APPROVED", "NEEDS_APPROVAL", "APPROVED", "REJECTED"]
+
+
+class QuoteRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    client_id: str
+    product_id: str
+    quantity: int = Field(ge=1)
+    discount: float = Field(ge=0, le=1)
+    unit_price: float = Field(ge=0)
+    revenue: float = Field(ge=0)
+    cost: float = Field(ge=0)
+    gross_margin: float
+    approval_status: QuoteApprovalStatus
+    evidence_reason: str
+    created_at: str
+    transition_note: str | None = None
+
+
+class QuoteCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: str = Field(min_length=1, max_length=80)
+    product_id: str = Field(min_length=1, max_length=80)
+    quantity: int = Field(ge=1, le=100_000)
+    discount: float = Field(ge=0, le=1)
+
+
+class QuoteTransitionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    target_status: Literal["APPROVED", "REJECTED"]
+    note: str = Field(default="", max_length=300)
+
+
+class RuntimeClient(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    max_discount: float = Field(ge=0, le=1)
+
+
+class RuntimeProduct(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    sku: str
+    description: str
+    unit_cost: float = Field(ge=0)
+    base_price: float = Field(ge=0)
+
+
+class RuntimeDashboard(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    total_quotes: int = Field(ge=0)
+    needs_approval: int = Field(ge=0)
+    approved_quotes: int = Field(ge=0)
+    rejected_quotes: int = Field(ge=0)
+    total_revenue: float = Field(ge=0)
+
+
+class GeneratedAppResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workbook_id: str
+    blueprint_version: str
+    unresolved_items: list[str] = Field(default_factory=list)
+    workflow: WorkflowSpec | None = None
+    clients: list[RuntimeClient] = Field(default_factory=list)
+    products: list[RuntimeProduct] = Field(default_factory=list)
+    quotes: list[QuoteRecord] = Field(default_factory=list)
+    dashboard: RuntimeDashboard
+
+
 class ParityStatus(str, Enum):
     PASS = "pass"
     FAIL = "fail"

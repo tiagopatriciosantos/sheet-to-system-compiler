@@ -30,6 +30,12 @@ def _workbook_dir(workbook_id: str) -> Path:
     return target
 
 
+def artifact_directory(workbook_id: str) -> Path:
+    """Return the validated artifact directory for a workbook identity."""
+
+    return _workbook_dir(workbook_id)
+
+
 def _write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(

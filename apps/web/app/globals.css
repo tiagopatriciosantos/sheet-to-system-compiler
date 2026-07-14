@@ -571,6 +571,198 @@ button:disabled {
   color: #fde68a;
 }
 
+.generated-app-panel {
+  background: linear-gradient(145deg, rgba(130, 240, 195, 0.1), rgba(23, 32, 45, 0.84));
+  border: 1px solid rgba(130, 240, 195, 0.42);
+  border-radius: 0.9rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.runtime-warning {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 0.55rem;
+  color: #fde68a;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  margin: 1rem 0 0;
+  padding: 0.7rem;
+}
+
+.runtime-stats {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.runtime-stats span {
+  background: rgba(10, 13, 18, 0.45);
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0.65rem;
+}
+
+.runtime-stats strong {
+  color: var(--text);
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.quote-form {
+  align-items: end;
+  background: rgba(10, 13, 18, 0.35);
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: 1.4fr 1.5fr 0.65fr 0.65fr auto;
+  margin-top: 1rem;
+  padding: 0.8rem;
+}
+
+.quote-form label {
+  color: var(--muted);
+  display: block;
+  font-size: 0.72rem;
+  margin-bottom: 0.35rem;
+}
+
+.quote-form select,
+.quote-form input {
+  background: var(--surface-raised);
+  border: 1px solid rgba(130, 240, 195, 0.28);
+  border-radius: 0.45rem;
+  color: var(--text);
+  font: inherit;
+  min-width: 0;
+  padding: 0.65rem;
+  width: 100%;
+}
+
+.quote-list {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.quote-list .section-heading {
+  margin-bottom: 0.15rem;
+}
+
+.empty-state {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.quote-card {
+  background: rgba(10, 13, 18, 0.52);
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  padding: 0.85rem;
+}
+
+.quote-card-heading,
+.quote-card-heading > div,
+.quote-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.65rem;
+  justify-content: space-between;
+}
+
+.quote-card-heading > div {
+  justify-content: flex-start;
+}
+
+.quote-card-heading > div span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.quote-status {
+  border-radius: 999px;
+  font-size: 0.68rem;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.quote-status.auto_approved,
+.quote-status.approved {
+  background: rgba(130, 240, 195, 0.12);
+  color: var(--accent);
+}
+
+.quote-status.needs_approval {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fde68a;
+}
+
+.quote-status.rejected {
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
+.quote-metrics {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 0.8rem;
+}
+
+.quote-metrics span {
+  background: rgba(23, 32, 45, 0.62);
+  border-radius: 0.4rem;
+  padding: 0.5rem;
+}
+
+.quote-metrics small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.68rem;
+}
+
+.quote-metrics strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+}
+
+.quote-card > p {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  margin: 0.7rem 0 0;
+}
+
+.quote-card > small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.72rem;
+  margin-top: 0.4rem;
+}
+
+.quote-actions {
+  justify-content: flex-start;
+  margin-top: 0.7rem;
+}
+
+.quote-actions button {
+  font-size: 0.76rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.secondary-button {
+  background: transparent;
+  border: 1px solid rgba(254, 202, 202, 0.35);
+  color: #fecaca;
+}
+
 .provenance-details {
   border-top: 1px solid var(--border);
   margin-top: 1rem;
@@ -647,6 +839,22 @@ button:disabled {
 
   .blueprint-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .runtime-stats,
+  .quote-form,
+  .quote-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .quote-form button {
+    grid-column: 1 / -1;
+  }
+
+  .quote-card-heading,
+  .quote-card-heading > div {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   button {

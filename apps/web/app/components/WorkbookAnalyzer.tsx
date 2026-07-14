@@ -108,6 +108,37 @@ type Blueprint = {
   answer_fingerprint: string;
 };
 
+type GeneratedApp = {
+  workbook_id: string;
+  blueprint_version: string;
+  unresolved_items: string[];
+  workflow: { name: string; states: string[]; transitions: { from: string; to: string; when: string }[] } | null;
+  clients: { id: string; name: string; max_discount: number }[];
+  products: { id: string; sku: string; description: string; unit_cost: number; base_price: number }[];
+  quotes: {
+    id: string;
+    client_id: string;
+    product_id: string;
+    quantity: number;
+    discount: number;
+    unit_price: number;
+    revenue: number;
+    cost: number;
+    gross_margin: number;
+    approval_status: "AUTO_APPROVED" | "NEEDS_APPROVAL" | "APPROVED" | "REJECTED";
+    evidence_reason: string;
+    created_at: string;
+    transition_note: string | null;
+  }[];
+  dashboard: {
+    total_quotes: number;
+    needs_approval: number;
+    approved_quotes: number;
+    rejected_quotes: number;
+    total_revenue: number;
+  };
+};
+
 function formatVisibility(visibility: Sheet["visibility"]) {
   if (visibility === "hidden") return "hidden";
   if (visibility === "very_hidden") return "very hidden";
@@ -120,6 +151,14 @@ export default function WorkbookAnalyzer() {
   const [interpretation, setInterpretation] = useState<Interpretation | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
+  const [generatedApp, setGeneratedApp] = useState<GeneratedApp | null>(null);
+  const [appLoading, setAppLoading] = useState(false);
+  const [quoteSaving, setQuoteSaving] = useState(false);
+  const [quoteTransitioning, setQuoteTransitioning] = useState<string | null>(null);
+  const [quoteClientId, setQuoteClientId] = useState("");
+  const [quoteProductId, setQuoteProductId] = useState("");
+  const [quoteQuantity, setQuoteQuantity] = useState("1");
+  const [quoteDiscount, setQuoteDiscount] = useState("0");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [interpreting, setInterpreting] = useState(false);
@@ -138,6 +177,7 @@ export default function WorkbookAnalyzer() {
     setInterpretation(null);
     setAnswers({});
     setBlueprint(null);
+    setGeneratedApp(null);
   }
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -166,6 +206,7 @@ export default function WorkbookAnalyzer() {
     setInterpretation(null);
     setAnswers({});
     setBlueprint(null);
+    setGeneratedApp(null);
     const body = new FormData();
     body.append("file", file);
 
@@ -201,6 +242,7 @@ export default function WorkbookAnalyzer() {
       const interpreted = payload as Interpretation;
       setInterpretation(interpreted);
       setBlueprint(null);
+      setGeneratedApp(null);
       const stateResponse = await fetch(`/api/workbooks/${interpreted.workbook_id}/ambiguities`, { cache: "no-store" });
       if (stateResponse.ok) {
         const state = (await stateResponse.json()) as AmbiguityState;
@@ -216,6 +258,26 @@ export default function WorkbookAnalyzer() {
   function handleAnswerChange(questionId: string, selectedOption: string) {
     setAnswers((current) => ({ ...current, [questionId]: selectedOption }));
     setBlueprint(null);
+    setGeneratedApp(null);
+  }
+
+  async function loadGeneratedApp(workbookId: string) {
+    setAppLoading(true);
+    try {
+      const response = await fetch(`/api/workbooks/${workbookId}/app`, { cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(typeof payload.detail === "string" ? payload.detail : "NÃ£o foi possÃ­vel abrir a aplicaÃ§Ã£o gerada.");
+      }
+      const app = payload as GeneratedApp;
+      setGeneratedApp(app);
+      setQuoteClientId((current) => current || app.clients[0]?.id || "");
+      setQuoteProductId((current) => current || app.products[0]?.id || "");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro inesperado ao abrir a aplicaÃ§Ã£o.");
+    } finally {
+      setAppLoading(false);
+    }
   }
 
   async function handleCompile() {
@@ -254,10 +316,59 @@ export default function WorkbookAnalyzer() {
         throw new Error(typeof detail === "string" ? detail : "NÃ£o foi possÃ­vel compilar o blueprint.");
       }
       setBlueprint(compiledPayload as Blueprint);
+      await loadGeneratedApp(interpretation.workbook_id);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Erro inesperado na compilaÃ§Ã£o.");
     } finally {
       setCompiling(false);
+    }
+  }
+
+  async function handleCreateQuote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!interpretation) return;
+    setQuoteSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/workbooks/${interpretation.workbook_id}/app/quotes`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          client_id: quoteClientId,
+          product_id: quoteProductId,
+          quantity: Number.parseInt(quoteQuantity, 10),
+          discount: Number.parseFloat(quoteDiscount),
+        }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "NÃ£o foi possÃ­vel criar a proposta.");
+      setGeneratedApp(payload as GeneratedApp);
+      setQuoteQuantity("1");
+      setQuoteDiscount("0");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro inesperado ao criar a proposta.");
+    } finally {
+      setQuoteSaving(false);
+    }
+  }
+
+  async function handleQuoteTransition(quoteId: string, targetStatus: "APPROVED" | "REJECTED") {
+    if (!interpretation) return;
+    setQuoteTransitioning(quoteId);
+    setError(null);
+    try {
+      const response = await fetch(`/api/workbooks/${interpretation.workbook_id}/app/quotes/${quoteId}/transitions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ target_status: targetStatus }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(typeof payload.detail === "string" ? payload.detail : "NÃ£o foi possÃ­vel alterar o estado da proposta.");
+      setGeneratedApp(payload as GeneratedApp);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro inesperado na transiÃ§Ã£o.");
+    } finally {
+      setQuoteTransitioning(null);
     }
   }
 
@@ -478,6 +589,84 @@ export default function WorkbookAnalyzer() {
                     <summary>Fingerprint da decisÃ£o humana</summary>
                     <code>{blueprint.answer_fingerprint}</code>
                   </details>
+                </div>
+              ) : null}
+
+              {appLoading ? <p className="feedback">A abrir a aplicaÃ§Ã£o gerada a partir do blueprint...</p> : null}
+
+              {generatedApp ? (
+                <div className="generated-app-panel">
+                  <div className="interpretation-heading">
+                    <div>
+                      <p className="eyebrow">GENERATED APP</p>
+                      <h3>Propostas industriais</h3>
+                    </div>
+                    <span className="ai-badge success">runtime {generatedApp.blueprint_version}</span>
+                  </div>
+
+                  {generatedApp.unresolved_items.length > 0 ? (
+                    <p className="runtime-warning">Ainda existem {generatedApp.unresolved_items.length} itens não bloqueantes por resolver; a runtime mostra-os explicitamente.</p>
+                  ) : null}
+
+                  <div className="runtime-stats">
+                    <span><strong>{generatedApp.dashboard.total_quotes}</strong> propostas</span>
+                    <span><strong>{generatedApp.dashboard.needs_approval}</strong> aguardam decisão</span>
+                    <span><strong>{generatedApp.dashboard.approved_quotes}</strong> aprovadas</span>
+                    <span><strong>{generatedApp.dashboard.total_revenue.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</strong> receita</span>
+                  </div>
+
+                  <form className="quote-form" onSubmit={handleCreateQuote}>
+                    <div>
+                      <label htmlFor="quote-client">Cliente</label>
+                      <select id="quote-client" value={quoteClientId} onChange={(event) => setQuoteClientId(event.target.value)} required>
+                        <option value="">Escolher cliente</option>
+                        {generatedApp.clients.map((client) => <option key={client.id} value={client.id}>{client.id} — {client.name} (máx. {client.max_discount.toLocaleString("pt-PT", { style: "percent" })})</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="quote-product">Produto</label>
+                      <select id="quote-product" value={quoteProductId} onChange={(event) => setQuoteProductId(event.target.value)} required>
+                        <option value="">Escolher produto</option>
+                        {generatedApp.products.map((product) => <option key={product.id} value={product.id}>{product.id} — {product.description} ({product.base_price.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })})</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="quote-quantity">Quantidade</label>
+                      <input id="quote-quantity" type="number" min="1" step="1" value={quoteQuantity} onChange={(event) => setQuoteQuantity(event.target.value)} required />
+                    </div>
+                    <div>
+                      <label htmlFor="quote-discount">Desconto</label>
+                      <input id="quote-discount" type="number" min="0" max="1" step="0.01" value={quoteDiscount} onChange={(event) => setQuoteDiscount(event.target.value)} required />
+                    </div>
+                    <button type="submit" disabled={quoteSaving || appLoading}>{quoteSaving ? "A calcular..." : "Criar proposta"}</button>
+                  </form>
+
+                  <div className="quote-list">
+                    <div className="section-heading compact"><div><p className="eyebrow">QUOTE WORKBENCH</p><h4>Propostas criadas na runtime</h4></div></div>
+                    {generatedApp.quotes.length === 0 ? <p className="empty-state">Ainda não existem propostas. Cria uma para observar cálculo e aprovação.</p> : null}
+                    {generatedApp.quotes.map((quote) => (
+                      <article className="quote-card" key={quote.id}>
+                        <div className="quote-card-heading">
+                          <div><strong>{quote.id}</strong><span>{quote.client_id} · {quote.product_id}</span></div>
+                          <span className={`quote-status ${quote.approval_status.toLowerCase()}`}>{quote.approval_status}</span>
+                        </div>
+                        <div className="quote-metrics">
+                          <span><small>Quantidade</small><strong>{quote.quantity}</strong></span>
+                          <span><small>Margem</small><strong>{quote.gross_margin.toLocaleString("pt-PT", { style: "percent", minimumFractionDigits: 1 })}</strong></span>
+                          <span><small>Receita</small><strong>{quote.revenue.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</strong></span>
+                          <span><small>Custo</small><strong>{quote.cost.toLocaleString("pt-PT", { style: "currency", currency: "EUR" })}</strong></span>
+                        </div>
+                        <p>{quote.evidence_reason}</p>
+                        {quote.transition_note ? <small>Decisão: {quote.transition_note}</small> : null}
+                        {quote.approval_status === "NEEDS_APPROVAL" ? (
+                          <div className="quote-actions">
+                            <button type="button" onClick={() => handleQuoteTransition(quote.id, "APPROVED")} disabled={quoteTransitioning === quote.id}>Aprovar</button>
+                            <button type="button" className="secondary-button" onClick={() => handleQuoteTransition(quote.id, "REJECTED")} disabled={quoteTransitioning === quote.id}>Rejeitar</button>
+                          </div>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 

@@ -19,3 +19,7 @@ O eval essencial do workbook industrial exige regras de `calculation` e `approva
 ## Fase 3 — decisão humana e compilação
 
 Esta fase não faz uma nova chamada à OpenAI. O utilizador escolhe entre opções previamente devolvidas pelo Structured Output; o backend valida a opção contra a pergunta, acrescenta a resposta como evidência humana e compila o `SystemBlueprint` com regras determinísticas. A nota e o timestamp são metadados de auditoria e não entram no fingerprint da versão.
+
+## Fase 4 — runtime gerada
+
+Esta fase também não faz chamadas à OpenAI. A runtime usa apenas o `SystemBlueprint` validado e dados tabulares do workbook. Não avalia fórmulas Excel, não executa código do modelo e não inventa campos; qualquer capacidade fora do subconjunto de propostas é tratada como limitação explícita até à paridade.
