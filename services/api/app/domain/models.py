@@ -129,6 +129,49 @@ class ClarificationQuestion(BaseModel):
     blocking: bool = False
 
 
+class AmbiguityAnswer(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    question_id: str
+    selected_option: str = Field(min_length=1, max_length=300)
+    note: str = Field(default="", max_length=500)
+    answered_at: str
+
+
+class AnswerSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    question_id: str
+    selected_option: str = Field(min_length=1, max_length=300)
+    note: str = Field(default="", max_length=500)
+
+
+class AnswerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    answers: list[AnswerSelection] = Field(max_length=5)
+
+
+class ResolutionSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workbook_id: str
+    source_sha256: str
+    answers: list[AmbiguityAnswer] = Field(default_factory=list)
+    updated_at: str
+
+
+class AmbiguityResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workbook_id: str
+    source_sha256: str
+    questions: list[ClarificationQuestion] = Field(default_factory=list)
+    answers: list[AmbiguityAnswer] = Field(default_factory=list)
+    pending_question_ids: list[str] = Field(default_factory=list)
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+
+
 class InterpretedRule(BaseModel):
     """Strict model output schema; origin and status are assigned by the API."""
 
@@ -268,6 +311,22 @@ class SystemBlueprint(BaseModel):
     views: list[ViewSpec] = Field(default_factory=list)
     rules: list[BusinessRule] = Field(default_factory=list)
     unresolved_items: list[str] = Field(default_factory=list)
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+    compiled_from_answers: list[str] = Field(default_factory=list)
+    answer_fingerprint: str
+
+    @model_validator(mode="after")
+    def validate_rule_evidence(self) -> "SystemBlueprint":
+        evidence_ids = {item.id for item in self.evidence}
+        dangling = {
+            ref
+            for rule in self.rules
+            for ref in rule.evidence_refs
+            if ref not in evidence_ids
+        }
+        if dangling:
+            raise ValueError(f"Blueprint rule evidence does not exist: {sorted(dangling)}")
+        return self
 
 
 class ParityStatus(str, Enum):

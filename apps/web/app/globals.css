@@ -444,10 +444,131 @@ button:disabled {
   margin: 0.55rem 0;
 }
 
-.question-card ul {
+.answer-picker {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+}
+
+.answer-picker span,
+.answer-actions span {
   color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.answer-picker select {
+  background: var(--surface-raised);
+  border: 1px solid rgba(130, 240, 195, 0.35);
+  border-radius: 0.55rem;
+  color: var(--text);
+  font: inherit;
+  padding: 0.7rem;
+}
+
+.answer-actions {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.blueprint-panel {
+  background: rgba(130, 240, 195, 0.06);
+  border: 1px solid rgba(130, 240, 195, 0.32);
+  border-radius: 0.85rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.blueprint-panel > .interpretation-heading code,
+.blueprint-rule code,
+.blueprint-panel .provenance-details code {
+  background: rgba(10, 13, 18, 0.75);
+  border-radius: 0.4rem;
+  color: var(--accent);
+  font-family: Consolas, monospace;
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+  padding: 0.45rem;
+}
+
+.blueprint-stats {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.blueprint-stats span {
+  background: rgba(10, 13, 18, 0.42);
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  padding: 0.65rem;
+}
+
+.blueprint-stats strong {
+  color: var(--text);
+  display: block;
+  font-size: 1.15rem;
+}
+
+.blueprint-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1.15fr 0.85fr;
+  margin-top: 1rem;
+}
+
+.blueprint-columns h4 {
+  margin: 0 0 0.6rem;
+}
+
+.blueprint-list {
+  display: grid;
+  gap: 0.45rem;
   margin: 0;
-  padding-left: 1.2rem;
+}
+
+.blueprint-rule,
+.plain-list li {
+  background: rgba(10, 13, 18, 0.42);
+  border: 1px solid var(--border);
+  border-radius: 0.55rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  list-style: none;
+  padding: 0.65rem;
+}
+
+.blueprint-rule > div {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+}
+
+.blueprint-rule > div span {
+  color: var(--accent);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.blueprint-rule code {
+  display: block;
+  margin-top: 0.45rem;
+}
+
+.plain-list {
+  padding: 0;
+}
+
+.plain-list .unresolved {
+  color: #fde68a;
 }
 
 .provenance-details {
@@ -515,6 +636,17 @@ button:disabled {
 
   .analysis-grid {
     grid-template-columns: 1fr;
+  }
+
+  .answer-actions,
+  .blueprint-columns {
+    align-items: stretch;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .blueprint-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   button {

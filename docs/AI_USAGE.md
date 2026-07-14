@@ -15,3 +15,7 @@ O workbook binário nunca é enviado ao modelo. O backend extrai primeiro um `Wo
 O modelo só devolve `InterpretedRule` e `ClarificationQuestion`. A API atribui `origin=inferred` e `status=inferred`, valida IDs de evidência contra a fonte e rejeita referências inventadas. Uma normalização limitada aceita apenas um ID existente seguido de separador; não transforma uma referência sem correspondência numa evidência válida.
 
 O eval essencial do workbook industrial exige regras de `calculation` e `approval`, referência a evidência de margem/configuração e uma pergunta sobre a fronteira de 15%. A execução real validada devolveu 9 regras, 4 perguntas e todos os links de evidência foram aceites pelo contrato.
+
+## Fase 3 — decisão humana e compilação
+
+Esta fase não faz uma nova chamada à OpenAI. O utilizador escolhe entre opções previamente devolvidas pelo Structured Output; o backend valida a opção contra a pergunta, acrescenta a resposta como evidência humana e compila o `SystemBlueprint` com regras determinísticas. A nota e o timestamp são metadados de auditoria e não entram no fingerprint da versão.

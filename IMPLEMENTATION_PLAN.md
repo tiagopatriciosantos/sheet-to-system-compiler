@@ -1,6 +1,6 @@
 # Sheet-to-System Compiler — plano de implementação
 
-Estado: Fase 2 concluída; Fase 3 por iniciar
+Estado: Fase 3 concluída; Fase 4 por iniciar
 Data de referência: 14 de julho de 2026
 Track: Work & Productivity
 Prazo do hackathon: 21 de julho de 2026, 17:00 PDT
@@ -405,7 +405,7 @@ Gate: **concluído**. `docker compose up --build -d` construiu as duas imagens; 
 - [x] construir X-Ray básico com evidência;
 - [x] adicionar fixtures e snapshot tests.
 
-Gate: **concluído**. O upload real do sample pela API Docker respondeu 200 e mostrou 5 sheets, `Config` hidden, 39 fórmulas em `Quotes`, três validações, dois formatos condicionais, 102 dependências e o warning `Declared unsupported feature: PowerQueryRefresh`. O mesmo fluxo foi validado através do proxy Next.js. A Fase 2 permanece por iniciar.
+Gate: **concluído**. O upload real do sample pela API Docker respondeu 200 e mostrou 5 sheets, `Config` hidden, 39 fórmulas em `Quotes`, três validações, dois formatos condicionais, 102 dependências e o warning `Declared unsupported feature: PowerQueryRefresh`. O mesmo fluxo foi validado através do proxy Next.js. A Fase 2 ficou desbloqueada e foi concluída no passo seguinte.
 
 ### 16 julho — Fase 2: interpretação GPT-5.6
 
@@ -415,16 +415,16 @@ Gate: **concluído**. O upload real do sample pela API Docker respondeu 200 e mo
 - [x] guardar proveniência e telemetria;
 - [x] implementar evals essenciais.
 
-Gate: **concluído**. O sample foi carregado e interpretado com a chave reutilizada através do Docker: resposta HTTP 200, `gpt-5.6`, Structured Output aceite, 9 regras inferidas, 4 perguntas de ambiguidade e referências de evidência validadas. O eval do caso industrial confirmou regras de `calculation` e `approval` e a pergunta sobre a fronteira de 15%. A Fase 3 permanece por iniciar.
+Gate: **concluído**. O sample foi carregado e interpretado com a chave reutilizada através do Docker: resposta HTTP 200, `gpt-5.6`, Structured Output aceite, 9 regras inferidas, 4 perguntas de ambiguidade e referências de evidência validadas. O eval do caso industrial confirmou regras de `calculation` e `approval` e a pergunta sobre a fronteira de 15%. A Fase 3 ficou desbloqueada e foi concluída no passo seguinte.
 
 ### 17 julho — Fase 3: confirmação e blueprint
 
-- [ ] construir Resolve Ambiguities;
-- [ ] persistir respostas;
-- [ ] compilar e validar `SystemBlueprint` versionado;
-- [ ] criar vista legível do blueprint.
+- [x] construir Resolve Ambiguities;
+- [x] persistir respostas;
+- [x] compilar e validar `SystemBlueprint` versionado;
+- [x] criar vista legível do blueprint.
 
-Gate: alterar uma resposta altera de forma determinística a regra correspondente no blueprint.
+Gate: **concluído**. A UI permite responder perguntas e gerar o blueprint; a API persiste respostas e blueprints versionados. O teste de gate compila a mesma interpretação com `AUTO_APPROVED at 15%` e `REVIEW at 15%` e verifica fingerprints/versões diferentes, a alteração determinística de `<` para `<=`, estado `confirmed` e evidência humana. O fluxo real no Docker interpretou o sample com 9 regras e 4 perguntas, bloqueou até as três perguntas obrigatórias serem respondidas e persistiu `v1-365b9a632c39` com 9 regras e 4 entidades. A persistência é JSON atómica no MVP; SQLite continua adiado para quando houver jobs multiutilizador.
 
 ### 18 julho — Fase 4: aplicação gerada
 

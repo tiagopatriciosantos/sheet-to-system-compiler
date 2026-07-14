@@ -40,6 +40,13 @@ def test_workbook_ir_preserves_provenance_and_visibility() -> None:
 
 
 def test_blueprint_accepts_rules_with_explicit_evidence() -> None:
+    evidence = EvidenceRef(
+        id="evidence-config-a1",
+        source_type="cell",
+        sheet="Config",
+        address="A1",
+        excerpt="Approval threshold",
+    )
     rule = BusinessRule(
         id="rule-margin-approval",
         name="Margem mínima para aprovação",
@@ -55,6 +62,8 @@ def test_blueprint_accepts_rules_with_explicit_evidence() -> None:
         version="0.1.0",
         source_workbook_hash="b" * 64,
         rules=[rule],
+        evidence=[evidence],
+        answer_fingerprint="c" * 64,
     )
 
     assert blueprint.rules[0].evidence_refs == ["evidence-config-a1"]

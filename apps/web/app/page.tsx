@@ -17,11 +17,11 @@ export default async function Home() {
   return (
     <main className="shell">
       <section className="hero" aria-labelledby="page-title">
-        <p className="eyebrow">SHEET-TO-SYSTEM COMPILER · FASE 2</p>
+        <p className="eyebrow">SHEET-TO-SYSTEM COMPILER · FASE 3</p>
         <h1 id="page-title">Folhas críticas. Sistemas verificáveis.</h1>
         <p className="lede">
-          Revelamos a estrutura, extraímos evidência e pedimos ao GPT-5.6 apenas uma interpretação
-          tipada das regras e ambiguidades que o workbook realmente contém.
+          Revelamos a estrutura, extraímos evidência, pedimos uma interpretação tipada ao GPT-5.6 e
+          compilamos as decisões humanas num blueprint verificável.
         </p>
         <div className="status-row" aria-label="Estado dos serviços">
           <span className={`status-dot ${apiStatus}`} aria-hidden="true" />

@@ -23,3 +23,9 @@
 - Toda a regra e pergunta tem de referenciar evidência existente. O adaptador tolera apenas sufixos não alfanuméricos ou texto que siga um ID existente de forma não ambígua; referências desconhecidas continuam a falhar.
 - A resposta é `store=False` e inclui hash do payload, tamanho, contagem de evidências, prompt version, modelo, response ID, duração e erro redigido.
 - A Fase 2 não gera código executável nem altera o workbook; confirmação humana e `SystemBlueprint` continuam na Fase 3.
+
+## 2026-07-14 — Fase 3
+
+- As respostas humanas são persistidas por `workbook_id` em JSON atómico dentro de `data/artifacts`; esta é uma decisão de MVP para não introduzir jobs ou migrações antes da runtime. A migração para SQLite permanece uma tarefa posterior.
+- O compiler é determinístico: `answer_fingerprint` deriva apenas do hash do workbook e das opções selecionadas, ignorando timestamps e notas para que a mesma decisão produza a mesma versão.
+- Uma decisão relacionada com uma regra acrescenta evidência `human:<question_id>`, muda o estado da regra para `confirmed` e altera apenas expressões suportadas pelo MVP. O compiler nunca produz ou executa código.

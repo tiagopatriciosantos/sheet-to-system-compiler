@@ -4,7 +4,7 @@ O Sheet-to-System Compiler transforma folhas de cálculo críticas em sistemas v
 
 ## Estado atual
 
-Fase 2 — interpretação verificável. Nesta fase existem:
+Fase 3 — confirmação e blueprint verificável. Nesta fase existem:
 
 - API FastAPI com `/health` e `POST /api/workbooks/analyze`;
 - validação, hash e storage local seguro para uploads `.xlsx`;
@@ -13,11 +13,14 @@ Fase 2 — interpretação verificável. Nesta fase existem:
 - frontend Next.js com upload e X-Ray do workbook;
 - botão para interpretar o workbook com GPT-5.6 e Structured Outputs;
 - regras inferidas, perguntas de ambiguidade, evidência e proveniência da chamada;
+- Resolve Ambiguities com respostas persistidas por workbook;
+- compilador determinístico de `SystemBlueprint`, com fingerprint, versão, regras confirmadas e limites visíveis;
+- vista legível do blueprint no frontend;
 - workbook de demonstração industrial com cinco sheets, uma sheet escondida, regras de margem e uma funcionalidade não suportada declarada;
 - testes unitários, snapshot e integração HTTP;
 - configuração local para `OPENAI_API_KEY` sem incluir a chave no Git.
 
-A compilação para aplicação, confirmação persistida e paridade pertencem às fases seguintes. A aplicação nunca envia o workbook integral para a OpenAI: envia apenas um payload `WorkbookIR` minimizado e redigido.
+A runtime da aplicação e a paridade pertencem às fases seguintes. A aplicação nunca envia o workbook integral para a OpenAI: envia apenas um payload `WorkbookIR` minimizado e redigido.
 
 ## Pré-requisitos
 
@@ -31,7 +34,7 @@ A compilação para aplicação, confirmação persistida e paridade pertencem �
 docker compose up --build
 ```
 
-Abrir http://localhost:3000, carregar `samples/industrial-quotes/industrial-quotes.xlsx`, executar o X-Ray e clicar em `Interpretar com GPT-5.6`. Verificar também http://localhost:8000/health.
+Abrir http://localhost:3000, carregar `samples/industrial-quotes/industrial-quotes.xlsx`, executar o X-Ray, clicar em `Interpretar com GPT-5.6`, responder às ambiguidades e clicar em `Guardar decisões e gerar blueprint`. Verificar também http://localhost:8000/health.
 
 Se as portas padrão estiverem ocupadas, definir `API_HOST_PORT` e `WEB_HOST_PORT` no ambiente antes de arrancar o Compose.
 

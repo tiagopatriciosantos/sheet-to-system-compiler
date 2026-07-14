@@ -1,11 +1,30 @@
-"""API surface for workbook upload, X-Ray and Fase 2 interpretation."""
+"""API surface for workbook upload, X-Ray, interpretation and blueprint compilation."""
 
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
-from app.domain.models import WorkbookIR, WorkbookInterpretation
+from app.compiler.compiler import BlueprintCompilationError, compile_blueprint
+from app.compiler.storage import (
+    ArtifactNotFoundError,
+    load_blueprint,
+    load_interpretation,
+    load_resolution,
+    save_blueprint,
+    save_interpretation,
+    save_resolution,
+)
+from app.domain.models import (
+    AmbiguityAnswer,
+    AmbiguityResponse,
+    AnswerRequest,
+    ResolutionSnapshot,
+    SystemBlueprint,
+    WorkbookIR,
+    WorkbookInterpretation,
+)
 from app.workbook.extractor import extract_workbook
 from app.workbook.interpreter import interpret_workbook
 from app.workbook.storage import WorkbookUploadError, load_stored_upload, store_upload
@@ -26,7 +45,7 @@ app = FastAPI(
 
 @app.get("/health", response_model=HealthResponse, tags=["system"])
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", service="api", phase="workbook-interpretation")
+    return HealthResponse(status="ok", service="api", phase="blueprint")
 
 
 class WorkbookAnalysisResponse(BaseModel):
@@ -85,4 +104,120 @@ async def interpret_stored_workbook(request: WorkbookInterpretationRequest) -> W
         filename=filename,
         sha256=stored.sha256,
     )
-    return await interpret_workbook(workbook)
+    interpretation = await interpret_workbook(workbook)
+    save_interpretation(interpretation)
+    return interpretation
+
+
+def _load_interpretation(workbook_id: str) -> WorkbookInterpretation:
+    try:
+        interpretation = load_interpretation(workbook_id)
+    except (ArtifactNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if not interpretation.ai.succeeded:
+        raise HTTPException(status_code=409, detail="A successful interpretation is required first.")
+    return interpretation
+
+
+def _ambiguity_response(
+    interpretation: WorkbookInterpretation,
+    resolution: ResolutionSnapshot | None,
+) -> AmbiguityResponse:
+    answers = resolution.answers if resolution else []
+    answered_ids = {answer.question_id for answer in answers}
+    return AmbiguityResponse(
+        workbook_id=interpretation.workbook_id,
+        source_sha256=interpretation.source_sha256,
+        questions=interpretation.questions,
+        answers=answers,
+        pending_question_ids=[
+            question.id for question in interpretation.questions if question.id not in answered_ids
+        ],
+        evidence=interpretation.evidence,
+    )
+
+
+@app.get(
+    "/api/workbooks/{workbook_id}/ambiguities",
+    response_model=AmbiguityResponse,
+    tags=["workbooks"],
+)
+def get_workbook_ambiguities(workbook_id: str) -> AmbiguityResponse:
+    interpretation = _load_interpretation(workbook_id)
+    try:
+        resolution = load_resolution(workbook_id)
+    except (ArtifactNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return _ambiguity_response(interpretation, resolution)
+
+
+@app.post(
+    "/api/workbooks/{workbook_id}/answers",
+    response_model=AmbiguityResponse,
+    tags=["workbooks"],
+)
+def save_workbook_answers(workbook_id: str, request: AnswerRequest) -> AmbiguityResponse:
+    interpretation = _load_interpretation(workbook_id)
+    questions = {question.id: question for question in interpretation.questions}
+    try:
+        resolution = load_resolution(workbook_id)
+    except (ArtifactNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    existing = {answer.question_id: answer for answer in (resolution.answers if resolution else [])}
+    for selection in request.answers:
+        question = questions.get(selection.question_id)
+        if question is None:
+            raise HTTPException(status_code=400, detail=f"Unknown clarification question: {selection.question_id}.")
+        if selection.selected_option not in question.options:
+            raise HTTPException(status_code=400, detail=f"Selected option is not valid for {selection.question_id}.")
+        existing[selection.question_id] = AmbiguityAnswer(
+            question_id=selection.question_id,
+            selected_option=selection.selected_option,
+            note=selection.note,
+            answered_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    snapshot = ResolutionSnapshot(
+        workbook_id=workbook_id,
+        source_sha256=interpretation.source_sha256,
+        answers=sorted(existing.values(), key=lambda answer: answer.question_id),
+        updated_at=datetime.now(timezone.utc).isoformat(),
+    )
+    save_resolution(snapshot)
+    return _ambiguity_response(interpretation, snapshot)
+
+
+@app.post(
+    "/api/workbooks/{workbook_id}/compile",
+    response_model=SystemBlueprint,
+    tags=["workbooks"],
+)
+def compile_workbook_blueprint(workbook_id: str) -> SystemBlueprint:
+    interpretation = _load_interpretation(workbook_id)
+    try:
+        resolution = load_resolution(workbook_id)
+        blueprint = compile_blueprint(interpretation, resolution.answers if resolution else [])
+        save_blueprint(workbook_id, blueprint)
+    except BlueprintCompilationError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"message": str(exc), "pending_question_ids": exc.pending_question_ids},
+        ) from exc
+    except (ArtifactNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return blueprint
+
+
+@app.get(
+    "/api/workbooks/{workbook_id}/blueprint",
+    response_model=SystemBlueprint,
+    tags=["workbooks"],
+)
+def get_workbook_blueprint(workbook_id: str) -> SystemBlueprint:
+    try:
+        blueprint = load_blueprint(workbook_id)
+    except (ArtifactNotFoundError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    if blueprint is None:
+        raise HTTPException(status_code=404, detail="The workbook blueprint was not compiled yet.")
+    return blueprint

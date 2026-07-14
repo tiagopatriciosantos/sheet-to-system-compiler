@@ -74,6 +74,40 @@ type Interpretation = {
   };
 };
 
+type AmbiguityAnswer = {
+  question_id: string;
+  selected_option: string;
+  note: string;
+  answered_at: string;
+};
+
+type AmbiguityState = {
+  answers: AmbiguityAnswer[];
+  pending_question_ids: string[];
+};
+
+type Blueprint = {
+  version: string;
+  source_workbook_hash: string;
+  entities: { name: string; fields: { name: string; data_type: string; required: boolean }[] }[];
+  calculations: { id: string; target: string; expression: string; evidence_refs: string[] }[];
+  validations: { id: string; target: string; expression: string; message: string; evidence_refs: string[] }[];
+  workflows: { name: string; states: string[]; transitions: { from: string; to: string; when: string }[] }[];
+  views: { name: string; view_type: string; entity: string }[];
+  rules: {
+    id: string;
+    name: string;
+    plain_language: string;
+    rule_type: string;
+    expression: string | null;
+    status: string;
+    evidence_refs: string[];
+  }[];
+  unresolved_items: string[];
+  compiled_from_answers: string[];
+  answer_fingerprint: string;
+};
+
 function formatVisibility(visibility: Sheet["visibility"]) {
   if (visibility === "hidden") return "hidden";
   if (visibility === "very_hidden") return "very hidden";
@@ -84,9 +118,12 @@ export default function WorkbookAnalyzer() {
   const [file, setFile] = useState<File | null>(null);
   const [analysis, setAnalysis] = useState<WorkbookAnalysis | null>(null);
   const [interpretation, setInterpretation] = useState<Interpretation | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [interpreting, setInterpreting] = useState(false);
+  const [compiling, setCompiling] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   function acceptFile(candidate: File | undefined) {
@@ -99,6 +136,8 @@ export default function WorkbookAnalyzer() {
     setFile(candidate);
     setError(null);
     setInterpretation(null);
+    setAnswers({});
+    setBlueprint(null);
   }
 
   function handleDrop(event: DragEvent<HTMLLabelElement>) {
@@ -125,6 +164,8 @@ export default function WorkbookAnalyzer() {
     setError(null);
     setAnalysis(null);
     setInterpretation(null);
+    setAnswers({});
+    setBlueprint(null);
     const body = new FormData();
     body.append("file", file);
 
@@ -157,7 +198,14 @@ export default function WorkbookAnalyzer() {
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.detail ?? "Não foi possível interpretar o workbook.");
-      setInterpretation(payload as Interpretation);
+      const interpreted = payload as Interpretation;
+      setInterpretation(interpreted);
+      setBlueprint(null);
+      const stateResponse = await fetch(`/api/workbooks/${interpreted.workbook_id}/ambiguities`, { cache: "no-store" });
+      if (stateResponse.ok) {
+        const state = (await stateResponse.json()) as AmbiguityState;
+        setAnswers(Object.fromEntries(state.answers.map((answer) => [answer.question_id, answer.selected_option])));
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Erro inesperado na interpretação.");
     } finally {
@@ -165,7 +213,56 @@ export default function WorkbookAnalyzer() {
     }
   }
 
+  function handleAnswerChange(questionId: string, selectedOption: string) {
+    setAnswers((current) => ({ ...current, [questionId]: selectedOption }));
+    setBlueprint(null);
+  }
+
+  async function handleCompile() {
+    if (!interpretation) return;
+    setCompiling(true);
+    setError(null);
+    try {
+      const selections = interpretation.questions
+        .filter((question) => answers[question.id])
+        .map((question) => ({
+          question_id: question.id,
+          selected_option: answers[question.id],
+          note: "",
+        }));
+      const saveResponse = await fetch(`/api/workbooks/${interpretation.workbook_id}/answers`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ answers: selections }),
+      });
+      const savedPayload = await saveResponse.json();
+      if (!saveResponse.ok) {
+        const detail = typeof savedPayload.detail === "string" ? savedPayload.detail : "NÃ£o foi possÃ­vel guardar as decisÃµes.";
+        throw new Error(detail);
+      }
+
+      const compileResponse = await fetch(`/api/workbooks/${interpretation.workbook_id}/compile`, {
+        method: "POST",
+        cache: "no-store",
+      });
+      const compiledPayload = await compileResponse.json();
+      if (!compileResponse.ok) {
+        const detail = compiledPayload.detail;
+        if (detail && typeof detail === "object" && "message" in detail) {
+          throw new Error(String(detail.message));
+        }
+        throw new Error(typeof detail === "string" ? detail : "NÃ£o foi possÃ­vel compilar o blueprint.");
+      }
+      setBlueprint(compiledPayload as Blueprint);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Erro inesperado na compilaÃ§Ã£o.");
+    } finally {
+      setCompiling(false);
+    }
+  }
+
   const evidenceById = new Map((interpretation?.evidence ?? []).map((item) => [item.id, item]));
+  const answeredCount = interpretation?.questions.filter((question) => answers[question.id]).length ?? 0;
 
   return (
     <section className="analyzer" aria-labelledby="analyzer-title">
@@ -311,9 +408,76 @@ export default function WorkbookAnalyzer() {
                     <article className="question-card" key={question.id}>
                       <div><strong>{question.question}</strong><span>{question.blocking ? "Bloqueante" : "Decisão recomendada"}</span></div>
                       <p>{question.impact}</p>
-                      <ul>{question.options.map((option) => <li key={option}>{option}</li>)}</ul>
+                      <label className="answer-picker">
+                        <span>DecisÃ£o</span>
+                        <select
+                          value={answers[question.id] ?? ""}
+                          onChange={(event) => handleAnswerChange(question.id, event.target.value)}
+                        >
+                          <option value="">Escolher uma opÃ§Ã£o</option>
+                          {question.options.map((option) => <option key={option} value={option}>{option}</option>)}
+                        </select>
+                      </label>
                     </article>
                   ))}
+                  <div className="answer-actions">
+                    <span>{answeredCount}/{interpretation.questions.length} decisÃµes respondidas. As perguntas bloqueantes tÃªm de ser resolvidas.</span>
+                    <button type="button" onClick={handleCompile} disabled={compiling}>
+                      {compiling ? "A compilar..." : "Guardar decisÃµes e gerar blueprint"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {interpretation.questions.length === 0 ? (
+                <div className="answer-actions">
+                  <span>NÃ£o foram detetadas ambiguidades; o blueprint pode ser gerado diretamente.</span>
+                  <button type="button" onClick={handleCompile} disabled={compiling}>
+                    {compiling ? "A compilar..." : "Gerar blueprint"}
+                  </button>
+                </div>
+              ) : null}
+
+              {blueprint ? (
+                <div className="blueprint-panel">
+                  <div className="interpretation-heading">
+                    <div>
+                      <p className="eyebrow">SYSTEM BLUEPRINT</p>
+                      <h3>Contrato compilado e auditÃ¡vel</h3>
+                    </div>
+                    <code>{blueprint.version}</code>
+                  </div>
+                  <div className="blueprint-stats">
+                    <span><strong>{blueprint.entities.length}</strong> entidades</span>
+                    <span><strong>{blueprint.calculations.length}</strong> cÃ¡lculos</span>
+                    <span><strong>{blueprint.validations.length}</strong> validaÃ§Ãµes</span>
+                    <span><strong>{blueprint.workflows.length}</strong> workflows</span>
+                    <span><strong>{blueprint.views.length}</strong> vistas</span>
+                  </div>
+                  <div className="blueprint-columns">
+                    <div>
+                      <h4>Regras confirmadas</h4>
+                      <div className="blueprint-list">
+                        {blueprint.rules.map((rule) => (
+                          <article className="blueprint-rule" key={rule.id}>
+                            <div><strong>{rule.name}</strong><span>{rule.status}</span></div>
+                            {rule.expression ? <code>{rule.expression}</code> : null}
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4>Entidades e limites</h4>
+                      <ul className="blueprint-list plain-list">
+                        {blueprint.entities.map((entity) => <li key={entity.name}><strong>{entity.name}</strong> · {entity.fields.length} campos</li>)}
+                        {blueprint.unresolved_items.map((item) => <li className="unresolved" key={item}>Pendente: {item}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                  <details className="provenance-details">
+                    <summary>Fingerprint da decisÃ£o humana</summary>
+                    <code>{blueprint.answer_fingerprint}</code>
+                  </details>
                 </div>
               ) : null}
 
