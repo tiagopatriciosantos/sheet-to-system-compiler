@@ -29,6 +29,8 @@ docker compose up --build
 
 Abrir http://localhost:3000 e verificar http://localhost:8000/health.
 
+Se as portas padrão estiverem ocupadas, definir `API_HOST_PORT` e `WEB_HOST_PORT` no ambiente antes de arrancar o Compose.
+
 ## Executar testes locais
 
 ```powershell

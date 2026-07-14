@@ -395,7 +395,7 @@ Um teste Playwright cobre todo o percurso principal com o workbook de amostra.
 - [x] criar documentação e CI local;
 - [x] criar esqueleto dos modelos Pydantic.
 
-Gate: **pendente de verificação Docker**. `docker compose config`, testes API, lint, type-check e smoke test local passaram; o arranque real com Docker não foi executado porque o daemon Docker Desktop não está ligado. A Fase 1 permanece bloqueada até esse último check passar.
+Gate: **concluído**. `docker compose up --build -d` construiu as duas imagens; API e frontend responderam 200 e ambos os containers ficaram `healthy`. Como a porta 8000 já estava ocupada pelo stack SOFICO local, a verificação usou `API_HOST_PORT=18000` e `WEB_HOST_PORT=13000`. A Fase 1 está agora desbloqueada.
 
 ### 15 julho — Fase 1: workbook real
 
