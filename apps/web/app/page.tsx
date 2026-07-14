@@ -1,3 +1,5 @@
+import WorkbookAnalyzer from "./components/WorkbookAnalyzer";
+
 async function getApiStatus(): Promise<"online" | "offline"> {
   try {
     const response = await fetch(`${process.env.API_BASE_URL ?? "http://localhost:8000"}/health`, {
@@ -15,17 +17,19 @@ export default async function Home() {
   return (
     <main className="shell">
       <section className="hero" aria-labelledby="page-title">
-        <p className="eyebrow">SHEET-TO-SYSTEM COMPILER · FASE 0</p>
+        <p className="eyebrow">SHEET-TO-SYSTEM COMPILER · FASE 1</p>
         <h1 id="page-title">Folhas críticas. Sistemas verificáveis.</h1>
         <p className="lede">
-          O próximo passo é revelar as regras escondidas num workbook, confirmar as ambiguidades
-          com uma pessoa e provar a migração com testes de paridade.
+          Começamos por revelar a estrutura, as fórmulas e os sinais de risco antes de qualquer
+          interpretação automática.
         </p>
         <div className="status-row" aria-label="Estado dos serviços">
           <span className={`status-dot ${apiStatus}`} aria-hidden="true" />
           API {apiStatus === "online" ? "online" : "offline"}
         </div>
       </section>
+
+      <WorkbookAnalyzer />
 
       <section className="cards" aria-label="Próximas capacidades">
         <article className="card">

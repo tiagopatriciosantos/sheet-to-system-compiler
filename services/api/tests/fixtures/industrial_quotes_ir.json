@@ -1,0 +1,9 @@
+{
+  "sheet_names": ["Clients", "Products", "Quotes", "Approvals", "Config"],
+  "hidden_sheets": ["Config"],
+  "formula_counts": {"Quotes": 39},
+  "required_formula_addresses": ["F4", "G4", "H4", "I4", "J4", "K4", "N4"],
+  "validation_counts": {"Clients": 1, "Products": 1, "Quotes": 3},
+  "conditional_format_counts": {"Quotes": 2},
+  "unsupported_features": ["Declared unsupported feature: PowerQueryRefresh"]
+}

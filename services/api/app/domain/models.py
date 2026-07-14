@@ -36,6 +36,27 @@ class FormulaCell(BaseModel):
     evidence_refs: list[str] = Field(default_factory=list)
 
 
+class WorkbookValidation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    range: str
+    validation_type: str | None = None
+    operator: str | None = None
+    formula1: str | None = None
+    formula2: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class ConditionalFormatRule(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    range: str
+    rule_type: str
+    operator: str | None = None
+    formula: str | None = None
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
 class WorkbookSheet(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -43,7 +64,13 @@ class WorkbookSheet(BaseModel):
     visibility: SheetVisibility
     max_row: int = Field(ge=0)
     max_column: int = Field(ge=0)
+    tables: list[str] = Field(default_factory=list)
+    named_ranges: list[str] = Field(default_factory=list)
+    merged_ranges: list[str] = Field(default_factory=list)
     formula_cells: list[FormulaCell] = Field(default_factory=list)
+    constants_of_interest: list[str] = Field(default_factory=list)
+    validations: list[WorkbookValidation] = Field(default_factory=list)
+    conditional_formats: list[ConditionalFormatRule] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
 
 

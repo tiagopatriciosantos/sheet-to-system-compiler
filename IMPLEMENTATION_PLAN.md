@@ -1,6 +1,6 @@
 # Sheet-to-System Compiler — plano de implementação
 
-Estado: pronto para implementação
+Estado: Fase 1 concluída; Fase 2 por iniciar
 Data de referência: 14 de julho de 2026
 Track: Work & Productivity
 Prazo do hackathon: 21 de julho de 2026, 17:00 PDT
@@ -399,13 +399,13 @@ Gate: **concluído**. `docker compose up --build -d` construiu as duas imagens; 
 
 ### 15 julho — Fase 1: workbook real
 
-- [ ] criar workbook de demonstração;
-- [ ] implementar validação e storage de uploads;
-- [ ] extrair `WorkbookIR` com `openpyxl`;
-- [ ] construir X-Ray básico com evidência;
-- [ ] adicionar fixtures e snapshot tests.
+- [x] criar workbook de demonstração;
+- [x] implementar validação e storage de uploads;
+- [x] extrair `WorkbookIR` com `openpyxl`;
+- [x] construir X-Ray básico com evidência;
+- [x] adicionar fixtures e snapshot tests.
 
-Gate: upload do sample mostra corretamente 5 sheets, a sheet escondida, fórmulas, validações e warnings.
+Gate: **concluído**. O upload real do sample pela API Docker respondeu 200 e mostrou 5 sheets, `Config` hidden, 39 fórmulas em `Quotes`, três validações, dois formatos condicionais, 102 dependências e o warning `Declared unsupported feature: PowerQueryRefresh`. O mesmo fluxo foi validado através do proxy Next.js. A Fase 2 permanece por iniciar.
 
 ### 16 julho — Fase 2: interpretação GPT-5.6
 

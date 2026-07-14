@@ -26,6 +26,7 @@ data/
 uploads/
 *.sqlite3
 *.db
+*.inspect.ndjson
 
 # OS / IDE
 .DS_Store

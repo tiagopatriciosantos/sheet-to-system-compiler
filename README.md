@@ -4,16 +4,18 @@ O Sheet-to-System Compiler transforma folhas de cálculo críticas em sistemas v
 
 ## Estado atual
 
-Fase 0 — fundação. Nesta fase existem:
+Fase 1 — workbook X-Ray. Nesta fase existem:
 
-- API FastAPI com `/health`;
-- modelos Pydantic base para os contratos do produto;
-- frontend Next.js mínimo;
-- Docker Compose para API e frontend;
-- testes unitários da API;
+- API FastAPI com `/health` e `POST /api/workbooks/analyze`;
+- validação, hash e storage local seguro para uploads `.xlsx`;
+- `WorkbookIR` determinístico extraído com `openpyxl`;
+- identificação de sheets, fórmulas, dependências, validações, tabelas, formatos condicionais e evidência navegável;
+- frontend Next.js com upload e X-Ray do workbook;
+- workbook de demonstração industrial com cinco sheets, uma sheet escondida, regras de margem e uma funcionalidade não suportada declarada;
+- testes unitários, snapshot e integração HTTP;
 - configuração local para `OPENAI_API_KEY` sem incluir a chave no Git.
 
-O parser de Excel e a integração OpenAI pertencem às fases seguintes e ainda não estão implementados.
+A interpretação semântica com OpenAI e a compilação para aplicação pertencem às fases seguintes. A Fase 1 não faz chamadas à OpenAI.
 
 ## Pré-requisitos
 
@@ -27,7 +29,7 @@ O parser de Excel e a integração OpenAI pertencem às fases seguintes e ainda 
 docker compose up --build
 ```
 
-Abrir http://localhost:3000 e verificar http://localhost:8000/health.
+Abrir http://localhost:3000, carregar `samples/industrial-quotes/industrial-quotes.xlsx` e verificar http://localhost:8000/health.
 
 Se as portas padrão estiverem ocupadas, definir `API_HOST_PORT` e `WEB_HOST_PORT` no ambiente antes de arrancar o Compose.
 
@@ -54,4 +56,4 @@ O backend é o único componente autorizado a usar a chave. O frontend não rece
 
 ## Plano
 
-Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de implementar a Fase 1.
+Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de avançar para a Fase 2.
