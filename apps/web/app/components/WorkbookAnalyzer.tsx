@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { type DragEvent, type FormEvent, useState } from "react";
 
 type Sheet = {
   name: string;
@@ -87,6 +87,32 @@ export default function WorkbookAnalyzer() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [interpreting, setInterpreting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function acceptFile(candidate: File | undefined) {
+    if (!candidate) return;
+    if (!candidate.name.toLowerCase().endsWith(".xlsx")) {
+      setFile(null);
+      setError("Escolhe um workbook .xlsx. Ficheiros .xls e .xlsm não são suportados.");
+      return;
+    }
+    setFile(candidate);
+    setError(null);
+    setInterpretation(null);
+  }
+
+  function handleDrop(event: DragEvent<HTMLLabelElement>) {
+    event.preventDefault();
+    setIsDragging(false);
+    acceptFile(event.dataTransfer.files?.[0]);
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLLabelElement>) {
+    const relatedTarget = event.relatedTarget;
+    if (!(relatedTarget instanceof Node) || !event.currentTarget.contains(relatedTarget)) {
+      setIsDragging(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -152,12 +178,25 @@ export default function WorkbookAnalyzer() {
       </div>
 
       <form className="upload-form" onSubmit={handleSubmit}>
-        <label className="file-picker">
-          <span>{file ? file.name : "Escolher workbook .xlsx"}</span>
+        <label
+          className={`file-picker ${isDragging ? "dragging" : ""}`}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <span>{file ? file.name : "Arrasta um workbook .xlsx ou clica para escolher"}</span>
+          <small>{isDragging ? "Larga o ficheiro aqui" : "Apenas .xlsx · máximo 10 MB"}</small>
           <input
             type="file"
             accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            onChange={(event) => acceptFile(event.target.files?.[0])}
           />
         </label>
         <button type="submit" disabled={loading}>

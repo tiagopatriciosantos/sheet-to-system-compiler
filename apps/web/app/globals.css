@@ -130,8 +130,26 @@ h1 {
   border-radius: 0.75rem;
   color: var(--text);
   cursor: pointer;
+  display: grid;
   flex: 1;
+  gap: 0.35rem;
   padding: 0.9rem 1rem;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.file-picker:hover,
+.file-picker.dragging {
+  background: rgba(130, 240, 195, 0.12);
+  border-color: var(--accent);
+}
+
+.file-picker.dragging {
+  transform: translateY(-1px);
+}
+
+.file-picker small {
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .file-picker input {
