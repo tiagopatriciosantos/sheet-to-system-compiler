@@ -1,6 +1,6 @@
 # Sheet-to-System Compiler — plano de implementação
 
-Estado: Fase 1 concluída; Fase 2 por iniciar
+Estado: Fase 2 concluída; Fase 3 por iniciar
 Data de referência: 14 de julho de 2026
 Track: Work & Productivity
 Prazo do hackathon: 21 de julho de 2026, 17:00 PDT
@@ -409,13 +409,13 @@ Gate: **concluído**. O upload real do sample pela API Docker respondeu 200 e mo
 
 ### 16 julho — Fase 2: interpretação GPT-5.6
 
-- [ ] criar schemas Pydantic para regras e perguntas;
-- [ ] integrar Responses API e Structured Outputs;
-- [ ] minimizar/redigir payload;
-- [ ] guardar proveniência e telemetria;
-- [ ] implementar evals essenciais.
+- [x] criar schemas Pydantic para regras e perguntas;
+- [x] integrar Responses API e Structured Outputs;
+- [x] minimizar/redigir payload;
+- [x] guardar proveniência e telemetria;
+- [x] implementar evals essenciais.
 
-Gate: análise real devolve regras tipadas, todas com evidência, e gera a ambiguidade planeada.
+Gate: **concluído**. O sample foi carregado e interpretado com a chave reutilizada através do Docker: resposta HTTP 200, `gpt-5.6`, Structured Output aceite, 9 regras inferidas, 4 perguntas de ambiguidade e referências de evidência validadas. O eval do caso industrial confirmou regras de `calculation` e `approval` e a pergunta sobre a fronteira de 15%. A Fase 3 permanece por iniciar.
 
 ### 17 julho — Fase 3: confirmação e blueprint
 

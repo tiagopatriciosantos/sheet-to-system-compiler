@@ -4,18 +4,20 @@ O Sheet-to-System Compiler transforma folhas de cálculo críticas em sistemas v
 
 ## Estado atual
 
-Fase 1 — workbook X-Ray. Nesta fase existem:
+Fase 2 — interpretação verificável. Nesta fase existem:
 
 - API FastAPI com `/health` e `POST /api/workbooks/analyze`;
 - validação, hash e storage local seguro para uploads `.xlsx`;
 - `WorkbookIR` determinístico extraído com `openpyxl`;
 - identificação de sheets, fórmulas, dependências, validações, tabelas, formatos condicionais e evidência navegável;
 - frontend Next.js com upload e X-Ray do workbook;
+- botão para interpretar o workbook com GPT-5.6 e Structured Outputs;
+- regras inferidas, perguntas de ambiguidade, evidência e proveniência da chamada;
 - workbook de demonstração industrial com cinco sheets, uma sheet escondida, regras de margem e uma funcionalidade não suportada declarada;
 - testes unitários, snapshot e integração HTTP;
 - configuração local para `OPENAI_API_KEY` sem incluir a chave no Git.
 
-A interpretação semântica com OpenAI e a compilação para aplicação pertencem às fases seguintes. A Fase 1 não faz chamadas à OpenAI.
+A compilação para aplicação, confirmação persistida e paridade pertencem às fases seguintes. A aplicação nunca envia o workbook integral para a OpenAI: envia apenas um payload `WorkbookIR` minimizado e redigido.
 
 ## Pré-requisitos
 
@@ -29,7 +31,7 @@ A interpretação semântica com OpenAI e a compilação para aplicação perten
 docker compose up --build
 ```
 
-Abrir http://localhost:3000, carregar `samples/industrial-quotes/industrial-quotes.xlsx` e verificar http://localhost:8000/health.
+Abrir http://localhost:3000, carregar `samples/industrial-quotes/industrial-quotes.xlsx`, executar o X-Ray e clicar em `Interpretar com GPT-5.6`. Verificar também http://localhost:8000/health.
 
 Se as portas padrão estiverem ocupadas, definir `API_HOST_PORT` e `WEB_HOST_PORT` no ambiente antes de arrancar o Compose.
 
@@ -46,14 +48,18 @@ pnpm --dir apps/web typecheck
 
 ## Configuração
 
-Editar `.env.local` e preencher apenas:
+Editar `.env.local` e preencher a chave; os restantes parâmetros são opcionais:
 
 ```text
 OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-5.6
+OPENAI_REASONING_EFFORT=low
+OPENAI_TIMEOUT_SECONDS=120
+OPENAI_MAX_OUTPUT_TOKENS=5000
 ```
 
 O backend é o único componente autorizado a usar a chave. O frontend não recebe variáveis `NEXT_PUBLIC_*` com segredos.
 
 ## Plano
 
-Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de avançar para a Fase 2.
+Consultar [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) e [AGENTS.md](AGENTS.md) antes de avançar para a Fase 3.

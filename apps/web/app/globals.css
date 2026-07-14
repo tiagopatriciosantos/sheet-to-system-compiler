@@ -182,6 +182,32 @@ button:disabled {
   font-size: 0.76rem;
 }
 
+.interpretation-action {
+  align-items: center;
+  background: linear-gradient(120deg, rgba(130, 240, 195, 0.11), rgba(23, 32, 45, 0.7));
+  border: 1px solid rgba(130, 240, 195, 0.28);
+  border-radius: 0.85rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.interpretation-action div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.interpretation-action span,
+.provenance-details p,
+.rule-card small,
+.question-card p {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .analysis-grid {
   display: grid;
   gap: 1rem;
@@ -276,6 +302,152 @@ button:disabled {
   padding: 0.55rem;
 }
 
+.interpretation-panel {
+  background: rgba(23, 32, 45, 0.7);
+  border: 1px solid rgba(130, 240, 195, 0.24);
+  border-radius: 0.9rem;
+  margin-top: 1rem;
+  padding: 1rem;
+}
+
+.interpretation-heading,
+.rule-card-heading,
+.question-card > div {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.interpretation-heading h3,
+.question-list h4 {
+  margin: 0;
+}
+
+.ai-badge,
+.rule-type,
+.question-card > div span {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.ai-badge.success {
+  background: rgba(130, 240, 195, 0.12);
+  color: var(--accent);
+}
+
+.ai-badge.error {
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
+.rule-list,
+.question-list {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.rule-card,
+.question-card {
+  background: rgba(10, 13, 18, 0.42);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+}
+
+.rule-card h4 {
+  margin: 0.3rem 0 0;
+}
+
+.rule-card p {
+  line-height: 1.5;
+  margin: 0.65rem 0;
+}
+
+.rule-card-heading > strong {
+  color: var(--accent);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.rule-type {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fde68a;
+}
+
+.rule-expression,
+.provenance-details code {
+  background: rgba(10, 13, 18, 0.75);
+  border-radius: 0.4rem;
+  color: var(--accent);
+  display: block;
+  font-family: Consolas, monospace;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  padding: 0.55rem;
+}
+
+.rule-card small {
+  display: block;
+  margin-top: 0.55rem;
+}
+
+.rule-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.rule-evidence span {
+  background: rgba(130, 240, 195, 0.1);
+  border-radius: 0.35rem;
+  color: var(--accent);
+  font-family: Consolas, monospace;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.4rem;
+}
+
+.question-list {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.question-card > div span {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fde68a;
+  white-space: nowrap;
+}
+
+.question-card p {
+  margin: 0.55rem 0;
+}
+
+.question-card ul {
+  color: var(--muted);
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.provenance-details {
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+}
+
+.provenance-details summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.provenance-details code {
+  margin-top: 0.5rem;
+  overflow-wrap: anywhere;
+}
+
 .cards {
   display: grid;
   gap: 1rem;
@@ -313,8 +485,12 @@ button:disabled {
 
   .analyzer-header,
   .upload-form,
+  .interpretation-action,
   .analysis-meta,
-  .sheet-row {
+  .sheet-row,
+  .interpretation-heading,
+  .rule-card-heading,
+  .question-card > div {
     align-items: stretch;
     flex-direction: column;
   }

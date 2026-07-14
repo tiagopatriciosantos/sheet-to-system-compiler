@@ -1,0 +1,5 @@
+{
+  "required_rule_types": ["calculation", "approval"],
+  "required_evidence_any": ["Quotes!J7", "Config!B4", "Quotes!I7"],
+  "ambiguity_terms": ["15", "fronteira", "limite", "threshold"]
+}

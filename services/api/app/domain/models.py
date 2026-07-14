@@ -8,7 +8,7 @@ later phases in IMPLEMENTATION_PLAN.md.
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class EvidenceRef(BaseModel):
@@ -111,7 +111,7 @@ class BusinessRule(BaseModel):
     expression: str | None = None
     inputs: list[str] = Field(default_factory=list)
     outputs: list[str] = Field(default_factory=list)
-    evidence_refs: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(min_length=1, max_length=8)
     origin: RuleOrigin
     status: RuleStatus
     confidence: float = Field(ge=0, le=1)
@@ -123,10 +123,86 @@ class ClarificationQuestion(BaseModel):
 
     id: str
     question: str
-    options: list[str] = Field(min_length=2)
+    options: list[str] = Field(min_length=2, max_length=5)
     impact: str
-    evidence_refs: list[str] = Field(default_factory=list)
+    evidence_refs: list[str] = Field(min_length=1, max_length=8)
     blocking: bool = False
+
+
+class InterpretedRule(BaseModel):
+    """Strict model output schema; origin and status are assigned by the API."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(pattern=r"^rule-[a-z0-9-]+$")
+    name: str = Field(min_length=3, max_length=120)
+    plain_language: str = Field(min_length=10, max_length=500)
+    rule_type: Literal[
+        "calculation",
+        "approval",
+        "validation",
+        "workflow",
+        "data_dependency",
+        "policy",
+        "unsupported",
+        "other",
+    ]
+    expression: str | None = Field(default=None, max_length=600)
+    inputs: list[str] = Field(default_factory=list, max_length=12)
+    outputs: list[str] = Field(default_factory=list, max_length=12)
+    evidence_refs: list[str] = Field(min_length=1, max_length=8)
+    confidence: float = Field(ge=0, le=1)
+    assumptions: list[str] = Field(default_factory=list, max_length=6)
+
+
+class InterpretationOutput(BaseModel):
+    """Structured Outputs contract sent to the model."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rules: list[InterpretedRule] = Field(max_length=12)
+    questions: list[ClarificationQuestion] = Field(max_length=5)
+
+
+class InterpretationTelemetry(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    attempted: bool = False
+    succeeded: bool = False
+    model: str | None = None
+    prompt_version: str
+    response_id: str | None = None
+    input_sha256: str
+    input_bytes: int = Field(ge=0)
+    evidence_count: int = Field(ge=0)
+    redacted: bool = True
+    duration_ms: int = Field(ge=0)
+    error: str | None = None
+
+
+class WorkbookInterpretation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workbook_id: str
+    source_sha256: str
+    rules: list[BusinessRule] = Field(default_factory=list)
+    questions: list[ClarificationQuestion] = Field(default_factory=list)
+    unsupported_features: list[str] = Field(default_factory=list)
+    evidence: list[EvidenceRef] = Field(default_factory=list)
+    ai: InterpretationTelemetry
+
+    @model_validator(mode="after")
+    def validate_evidence_links(self) -> "WorkbookInterpretation":
+        evidence_ids = {item.id for item in self.evidence}
+        referenced_ids = {
+            ref
+            for item in [*self.rules, *self.questions]
+            for ref in item.evidence_refs
+        }
+        dangling = referenced_ids - evidence_ids
+        if dangling:
+            raise ValueError(f"Interpretation evidence does not exist: {sorted(dangling)}")
+        return self
 
 
 class EntityField(BaseModel):

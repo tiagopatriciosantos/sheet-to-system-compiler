@@ -1,5 +1,17 @@
 # Utilização de IA
 
-Ainda não existem chamadas à OpenAI na Fase 1. O upload e o X-Ray atual são determinísticos: a aplicação lê a estrutura do workbook, fórmulas, dependências, validações e evidência local sem enviar o ficheiro para um modelo.
+## Fase 2 — interpretação
 
-Nas fases seguintes, a integração deverá usar a Responses API com `gpt-5.6` e Structured Outputs. O payload será um `WorkbookIR` minimizado, nunca o workbook integral por defeito. Prompts, schemas, versões e resultados de eval serão registados sem segredos ou dados sensíveis.
+- API: Responses API;
+- modelo por defeito: `gpt-5.6`;
+- Structured Outputs: schema Pydantic `InterpretationOutput` através de `text_format`;
+- prompt: `workbook-interpretation-v1`;
+- esforço de raciocínio por defeito: `low`, configurável por `OPENAI_REASONING_EFFORT`;
+- armazenamento da resposta: `store=False`;
+- timeout: 120 segundos por defeito, configurável por `OPENAI_TIMEOUT_SECONDS`.
+
+O workbook binário nunca é enviado ao modelo. O backend extrai primeiro um `WorkbookIR` e cria um payload limitado a estrutura, fórmulas, dependências, validações, funcionalidades não suportadas e evidência. Excerto de emails e telefones é redigido; o payload inclui hash, tamanho e contagem de evidência para proveniência.
+
+O modelo só devolve `InterpretedRule` e `ClarificationQuestion`. A API atribui `origin=inferred` e `status=inferred`, valida IDs de evidência contra a fonte e rejeita referências inventadas. Uma normalização limitada aceita apenas um ID existente seguido de separador; não transforma uma referência sem correspondência numa evidência válida.
+
+O eval essencial do workbook industrial exige regras de `calculation` e `approval`, referência a evidência de margem/configuração e uma pergunta sobre a fronteira de 15%. A execução real validada devolveu 9 regras, 4 perguntas e todos os links de evidência foram aceites pelo contrato.

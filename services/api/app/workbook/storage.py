@@ -90,3 +90,33 @@ async def store_upload(upload: UploadFile) -> StoredWorkbook:
         size_bytes=len(data),
         sha256=hashlib.sha256(data).hexdigest(),
     )
+
+
+def load_stored_upload(storage_key: str) -> StoredWorkbook:
+    """Resolve a previously stored workbook without accepting arbitrary paths."""
+
+    safe_name = Path(storage_key).name
+    if safe_name != storage_key or Path(safe_name).suffix.lower() != ".xlsx":
+        raise WorkbookUploadError("The storage key is invalid.")
+    try:
+        workbook_id = str(uuid.UUID(Path(safe_name).stem))
+    except ValueError as exc:
+        raise WorkbookUploadError("The storage key is invalid.") from exc
+
+    root = UPLOAD_ROOT.resolve()
+    target = (root / safe_name).resolve()
+    if target.parent != root or not target.is_file():
+        raise WorkbookUploadError("The stored workbook was not found.")
+
+    digest = hashlib.sha256()
+    with target.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return StoredWorkbook(
+        workbook_id=workbook_id,
+        filename=safe_name,
+        storage_key=safe_name,
+        path=target,
+        size_bytes=target.stat().st_size,
+        sha256=digest.hexdigest(),
+    )
